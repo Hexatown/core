@@ -1,0 +1,14 @@
+{
+  "name": "hexatown",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "hexatown":{"isMaster":true},
+  "scripts": {
+    
+    "sync": "powershell ./src/jobs/mover/PackageManager.ps1"
+    
+  },
+  "author": "",
+  "license": "ISC"
+}

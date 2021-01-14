@@ -1,0 +1,9 @@
+{
+  "version": "1",
+ 
+  "lists": [
+    {
+      "properties": "PropertyBag"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "version": "1",
+ 
+  "lists": [
+    {
+      "properties": "PropertyBag",
+      "apirequests":"Office%20Graph%20API"
+    }
+  ]
+}
