@@ -4,4 +4,6 @@ if (!(Test-Path ($installPath)) ){
 }
 
 # Save-Module -Name Pester   -Path $installPath 
-Save-Module -Name platyPS   -Path $installPath 
+#Save-Module -Name platyPS   -Path $installPath 
+Save-Module -Name MarkdownToHTML   -Path $installPath 
+
