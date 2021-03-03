@@ -8,7 +8,7 @@ If (!(test-path $filePath)) {
 
 
 
-$functions = Get-Command –CommandType Function | where {$_.version -eq $null -and !$_.name.EndsWith(":") -and !$_.name.EndsWith("cd\") -and !$_.name.EndsWith("cd..") -and !$_.name.EndsWith("cd..tests")} 
+$functions = Get-Command -CommandType Function | where {$_.version -eq $null -and !$_.name.EndsWith(":") -and !$_.name.EndsWith("cd\") -and !$_.name.EndsWith("cd..") -and !$_.name.EndsWith("cd..tests")} 
 
 foreach ($function in $functions)
 {
@@ -16,7 +16,7 @@ foreach ($function in $functions)
 New-MarkdownHelp -Command $function -OutputFolder $filePath
    
 $functionCode = @"
-function $($function.name) (){
+function $($function.name) {
 $($function.Definition)
 }
 "@
@@ -36,7 +36,12 @@ Describe '$($function.name)' {
 
 "@
 
-   out-file (Join-Path $filePath "$($function.name).ps1" ) -InputObject $functionCode
-   out-file (Join-Path $filePath "$($function.name).tests.ps1" ) -InputObject $testCode
+if (!(test-path (Join-Path $filePath "$($function.name).ps1" ) )){
+    out-file (Join-Path $filePath "$($function.name).ps1" ) -InputObject $functionCode
+}
+if (!(test-path (Join-Path $filePath "$($function.name).tests.ps1" ) )){
+    out-file (Join-Path $filePath "$($function.name).tests.ps1" ) -InputObject $testCode
+}
+   
 }
 

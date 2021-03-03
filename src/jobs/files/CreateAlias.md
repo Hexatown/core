@@ -8,7 +8,7 @@ schema: 2.0.0
 # CreateAlias
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Create a new item in the API
 
 ## SYNTAX
 
