@@ -36,12 +36,12 @@ Describe '$($function.name)' {
 
 "@
 
-if (!(test-path (Join-Path $filePath "$($function.name).ps1" ) )){
+#if (!(test-path (Join-Path $filePath "$($function.name).ps1" ) )){
     out-file (Join-Path $filePath "$($function.name).ps1" ) -InputObject $functionCode
-}
-if (!(test-path (Join-Path $filePath "$($function.name).tests.ps1" ) )){
+#}
+#if (!(test-path (Join-Path $filePath "$($function.name).tests.ps1" ) )){
     out-file (Join-Path $filePath "$($function.name).tests.ps1" ) -InputObject $testCode
-}
+#}
    
 }
 
