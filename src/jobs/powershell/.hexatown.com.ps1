@@ -1,4 +1,4 @@
-<# V2.0.0@HEXATOWN 
+<# V2.0.1@HEXATOWN 
  
 Copyright (C) 2020-2021 Niels Gregers Johansen
 
@@ -7,6 +7,10 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+2.0.1
+------
+Introducting env variable APICAPTURE which will create the file and directory if not present
+ 
 2.0.0
 ------
 Breaking change, to keep authencating to Exchange using
@@ -1455,6 +1459,26 @@ try
         
             $path = $request.Path
             $method = $request.Method
+            if ($ENV:APICAPTURE){
+            if (!(test-path "$PSScriptRoot/../../apis$path/$method.ps1")){
+                EnsurePath "$PSScriptRoot/../../apis$path"
+                $scriptText = @"
+param (`$hexatown,`$request,`$requestor)
+&`"`$PSScriptRoot\..\..\actions\***THE SCRIPT TO USE***.ps1" `
+`$hexatown `
+"@        
+
+    $requestFields = $payload | Get-Member -MemberType  NoteProperty | Select Name
+    foreach ($field in $requestFields)
+    {
+        $scriptText += "`$request.'$($field.Name)'`` `n"
+    }
+    
+            Out-File "$PSScriptRoot/../../apis$path/$method.ps1" -InputObject  $scriptText 
+            
+            }
+            
+            }
           
             if (!(test-path "$PSScriptRoot/../../apis$path/$method.ps1")) {
                 $responseData = "apis$path/$method not found"
@@ -1511,9 +1535,9 @@ $body = @{fields = @{
     }
 
         Start-Sleep -Seconds 1
-        $elapsed =  New-TimeSpan –Start $StartDate –End (GET-DATE)
+        $elapsed =  New-TimeSpan â€“Start $StartDate â€“End (GET-DATE)
 
-        $elapsedMinute =  New-TimeSpan –Start $StartDateMinute –End (GET-DATE)
+        $elapsedMinute =  New-TimeSpan â€“Start $StartDateMinute â€“End (GET-DATE)
 
         if ($elapsedMinute.TotalMinutes -ge 1){
             $TotalMinutes++
@@ -1902,6 +1926,7 @@ function CreateCoreList($hexatown, $siteUrl,$definition) {
     
 
 }
+
 
 
 
