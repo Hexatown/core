@@ -7,6 +7,10 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+2.0.3
+-----
+Missing trailing space
+
 2.0.2
 -----
 Bug fix
@@ -1469,7 +1473,7 @@ try
                 $scriptText = @"
 param (`$hexatown,`$request,`$requestor)
 &`"`$PSScriptRoot\..\..\actions\***THE SCRIPT TO USE***.ps1" `
-`$hexatown `
+`$hexatown ` 
 "@        
 
     $requestFields = $payload | Get-Member -MemberType  NoteProperty | Select Name
