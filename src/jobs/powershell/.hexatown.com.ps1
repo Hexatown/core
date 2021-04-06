@@ -1,4 +1,4 @@
-<# V2.0.5@HEXATOWN 
+<# V2.0.6@HEXATOWN 
  
 Copyright (C) 2020-2021 Niels Gregers Johansen
 
@@ -7,6 +7,10 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+2.0.6
+-----
+Added defaults for Init (...$otherOptions)
+
 2.0.5
 -----
 Change to Exchange Auth and error handling
@@ -782,6 +786,14 @@ function loadLists($hexatown, $schema, $lists) {
 
 
 function Init ($invocation, $requireExchange, $delegated,$scope,$otherOptions) {
+
+    if ($null -eq $otherOptions){
+        $otherOptions = @{
+connectToSharePoint = $true
+                         SkipTranscript = $false
+                        }
+    }
+
     $scriptName = $invocation.MyCommand.Name
     $path = Split-Path $invocation.MyCommand.Path
     DotEnvConfigure $false $path
@@ -2025,6 +2037,7 @@ function CreateCoreList($hexatown, $siteUrl,$definition) {
     
 
 }
+
 
 
 
