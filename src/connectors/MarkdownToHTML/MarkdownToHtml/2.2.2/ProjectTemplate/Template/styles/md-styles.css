@@ -1,0 +1,86 @@
+﻿h1 {
+    font-size: 14pt;
+    color: darkblue;
+}
+
+h2 {
+    font-size: 12pt;
+    color: firebrick;
+}
+
+cite {
+    font-size: 9pt;
+    color: gray;
+}
+
+td, th {
+    border: 1px solid;
+    border-color: lightgray
+}
+
+th {
+    background-color: lightblue
+}
+
+dt {
+    font-size: 10pt;
+    color: chocolate;
+    font-weight: bold;
+}
+
+pre {
+    border: 1px solid;
+    border-color: lightgray;
+}
+
+blockquote {
+    border: none;
+    text-indent: each-line;
+}
+
+code {
+    font-family: Consolas;
+    color: darkmagenta;
+}
+
+footer {
+    font-size: 10pt;
+    color: slategray;
+}
+
+/* Site Navigation */
+nav {
+    border-width: 1px;
+    border-radius: 15px;
+    border-style: solid;
+    float: right;
+    max-width: 20%;
+    padding: 10px;
+    background: lightskyblue;
+}
+
+.navitem {
+    width: 100%;
+    text-align: center;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.navitem1 {
+    font-size: 10pt;
+    font-weight: bold;
+}
+
+.navitem2 {
+    font-size: 10pt;
+}
+
+.navitem3 {
+    font-size: 10pt;
+    font-style: italic;
+}
+
+.navitem4, .navitem5, .navitem6 {
+    font-size: 8pt;
+}

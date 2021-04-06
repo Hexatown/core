@@ -1,0 +1,129 @@
+﻿<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{9ab570fe-b7d3-403c-a38f-713a6a5c0b7c}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>MyApplication</RootNamespace>
+    <AssemblyName>MyApplication</AssemblyName>
+    <Name>MarkdownToHtml</Name>
+    <ProjectHome />
+    <PreBuildScript>import-module MarkdownCodeDocs
+import-module -name $pwd
+
+$doc = Join-Path $pwd.Path 'Documentation'
+Publish-PSModuleMarkdown -moduleName 'MarkdownToHTML' -Destination $doc</PreBuildScript>
+    <PostBuildScript>$pathBak = $env:PSModulePath
+$env:PSModulePath+=[char]0x3b + 'C:\Program Files\WindowsPowerShell\Modules' 
+$env:PSModulePath = "$pwd/.." + [char]0x3b + $env:PSModulePath 
+import-module pester
+import-module MarkDownToHTML -force
+
+Invoke-Pester -Path './MarkdownToHtml.tests.ps1' -EnableExit
+
+$env:PSModulePath = $pathBak
+
+import-module 'WetHatLab'
+Protect-whPoshModule $pwd -Store Root
+</PostBuildScript>
+    <PackageEntryPoint>MarkdownToHtml.tests.ps1</PackageEntryPoint>
+    <DotNetVersion>v4.7.2</DotNetVersion>
+    <PackageType>Console</PackageType>
+    <DebugArguments>'ConversionProjects'</DebugArguments>
+    <StartupFile>
+    </StartupFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Documentation\" />
+    <Folder Include="en\" />
+    <Folder Include="ProjectTemplate\" />
+    <Folder Include="ProjectTemplate\markdown\" />
+    <Folder Include="ProjectTemplate\Template\" />
+    <Folder Include="ProjectTemplate\Template\styles\" />
+    <Folder Include="ReferenceData\" />
+    <Folder Include="ReferenceData\html\" />
+    <Folder Include="ReferenceData\html_cust\" />
+    <Folder Include="ReferenceData\html_cust\SiteContent2\" />
+    <Folder Include="ReferenceData\html_cust\SiteContent1\" />
+    <Folder Include="ReferenceData\html_cust\SiteContent2\SubFolder\" />
+    <Folder Include="TestData\" />
+    <Folder Include="Template\styles\" />
+    <Folder Include="Template\" />
+    <Folder Include="TestData\markdown\" />
+    <Folder Include="TestData\markdown\Dir\" />
+    <Folder Include="TestData\markdown\Dir\SubDir\" />
+    <Folder Include="TestData\markdown\SiteContent2\" />
+    <Folder Include="TestData\markdown\SiteContent1\" />
+    <Folder Include="TestData\markdown\SiteContent2\SubFolder\" />
+    <Folder Include="TestData\ProjectConfigs\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Debug.ps1" />
+    <Compile Include="MarkdownToHtml.psd1" />
+    <Compile Include="MarkdownToHtml.psm1" />
+    <Compile Include="MarkdownToHtml.tests.ps1" />
+    <Compile Include="ProjectTemplate\Build.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include=".gitignore" />
+    <Content Include="Documentation\about_MarkdownToHTML.md" />
+    <Content Include="Documentation\Convert-MarkdownToHTML.md" />
+    <Content Include="Documentation\Convert-MarkdownToHTMLFragment.md" />
+    <Content Include="Documentation\ConvertTo-NavigationItem.md" />
+    <Content Include="Documentation\ConvertTo-PageHeadingNavigation.md" />
+    <Content Include="Documentation\Find-MarkdownFiles.md" />
+    <Content Include="Documentation\MarkdownToHTML.md" />
+    <Content Include="Documentation\New-HTMLTemplate.md" />
+    <Content Include="Documentation\New-StaticHTMLSiteProject.md" />
+    <Content Include="Documentation\Publish-StaticHtmlSite.md" />
+    <Content Include="en\about_MarkdownToHTML.help.txt" />
+    <Content Include="LICENSE" />
+    <Content Include="Markdown2HTML.png" />
+    <Content Include="ProjectTemplate\Build.json" />
+    <Content Include="ProjectTemplate\markdown\README.md" />
+    <Content Include="ProjectTemplate\Template\md-template.html" />
+    <Content Include="ProjectTemplate\Template\styles\md-styles.css" />
+    <Content Include="README.md" />
+    <Content Include="ReferenceData\html\.gitignore" />
+    <Content Include="ReferenceData\html\Code.html" />
+    <Content Include="ReferenceData\html\KaMaid.html" />
+    <Content Include="ReferenceData\html\KaTex.html" />
+    <Content Include="ReferenceData\html\mermaid.html" />
+    <Content Include="ReferenceData\html_cust\Code.html" />
+    <Content Include="ReferenceData\html_cust\KaMaid.html" />
+    <Content Include="ReferenceData\html_cust\KaTex.html" />
+    <Content Include="ReferenceData\html_cust\mermaid.html" />
+    <Content Include="ReferenceData\html_cust\SiteContent1\Code.html" />
+    <Content Include="ReferenceData\html_cust\SiteContent2\SubFolder\mermaid.html" />
+    <Content Include="Template\md-template.html" />
+    <Content Include="Template\styles\md-styles.css" />
+    <Content Include="TestData\markdown\Code.md" />
+    <Content Include="TestData\markdown\KaMaid.md" />
+    <Content Include="TestData\markdown\KaTex.md" />
+    <Content Include="TestData\markdown\mermaid.md" />
+    <Content Include="TestData\markdown\SiteContent1\Code.md" />
+    <Content Include="TestData\markdown\SiteContent2\SubFolder\mermaid.md" />
+    <Content Include="TestData\ProjectConfigs\Build1.json" />
+    <Content Include="TestData\ProjectConfigs\Build2.json" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Target Name="Build" />
+  <Import Project="$(MSBuildExtensionsPath)\PowerShell Tools for Visual Studio\PowerShellTools.targets" Condition="Exists('$(MSBuildExtensionsPath)\PowerShell Tools for Visual Studio\PowerShellTools.targets')" />
+</Project>
