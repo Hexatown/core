@@ -1,4 +1,4 @@
-<# V2.0.4@HEXATOWN 
+<# V2.0.5@HEXATOWN 
  
 Copyright (C) 2020-2021 Niels Gregers Johansen
 
@@ -7,6 +7,11 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+2.0.5
+-----
+Change to Exchange Auth and error handling
+Bug fixes
+
 2.0.4
 -----
 removed malicious fields
@@ -336,9 +341,9 @@ function ConnectExchange($username, $secret) {
     
 }
     
-function ConnectExchange2($appid, $token) {
+function ConnectExchange2($appid, $token,$ignoreErrors) {
 
-    write-output "Connecting to Exchange Online"
+    
     
     if ($env:EXCHCERTIFICATEPATH -eq ""){
        FatalError 'Missing $env:EXCHCERTIFICATEPATH'
@@ -352,9 +357,16 @@ function ConnectExchange2($appid, $token) {
     if ($env:EXCHAPPID -eq ""){
        FatalError 'Missing $env:EXCHAPPID'
     }
+
+    $errorAction =[System.Management.Automation.ActionPreference]::Continue
+    if ($ignoreErrors){
+        $errorAction =[System.Management.Automation.ActionPreference]::SilentlyContinue
+    }
+
     
-    $Session = Connect-ExchangeOnline -CertificateFilePath $env:EXCHCERTIFICATEPATH -CertificatePassword (ConvertTo-SecureString -String $env:EXCHCERTIFICATEPASSWORD -AsPlainText -Force) -AppID $env:EXCHAPPID -Organization $env:EXCHORGANIZATION
+    $Session = Connect-ExchangeOnline -CertificateFilePath $env:EXCHCERTIFICATEPATH -CertificatePassword (ConvertTo-SecureString -String $env:EXCHCERTIFICATEPASSWORD -AsPlainText -Force) -AppID $env:EXCHAPPID -Organization $env:EXCHORGANIZATION -ShowBanner:$false   -ErrorAction SilentlyContinue # $errorAction
     
+
     return $Session
     
 }
@@ -496,7 +508,7 @@ function FindSiteByUrl($token, $siteUrl) {
     return  ( "https://graph.microsoft.com/v1.0/sites/" + $site.id)
 }
 
-function GraphAPI($hexatown, $method, $url, $body) {
+function GraphAPI($hexatown, $method, $url, $body,$ignoreError) {
     $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
     $headers.Add("Content-Type", "application/json")
     $headers.Add("Accept", "application/json")
@@ -504,8 +516,12 @@ function GraphAPI($hexatown, $method, $url, $body) {
     
     
     $errorCount = $error.Count
-    $result = Invoke-RestMethod ($url) -Method $method -Headers $headers -Body $body
-    if ($errorCount -ne $error.Count) {
+    $CurrentErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'SilentlyContinue'
+    $result = Invoke-RestMethod ($url) -Method $method -Headers $headers -Body $body 
+    
+    $ErrorActionPreference = $CurrentErrorActionPreference
+    if (!$ignoreError -and $errorCount -ne $error.Count) {
         Write-Error $url
     }
 
@@ -829,17 +845,19 @@ function Init ($invocation, $requireExchange, $delegated,$scope,$otherOptions) {
 
 
     $token = GetAccessToken $env:APPCLIENT_ID $env:APPCLIENT_SECRET $env:APPCLIENT_DOMAIN
-    $site = FindSiteByUrl $token $env:SITEURL
-    if ($env:HEXATOWNURL) {
-        $hexatownsite = FindSiteByUrl $token $env:HEXATOWNURL
-    }
+     if ($otherOptions.connectToSharePoint){
+        $site = FindSiteByUrl $token $env:SITEURL
+        if ($env:HEXATOWNURL) {
+            $hexatownsite = FindSiteByUrl $token $env:HEXATOWNURL
+        }
     
     
-    if ($null -eq $site) {
-        Write-Warning "Not able for find site - is \$env:SITEURL defined?"
-        exit
+        if ($null -eq $site) {
+            Write-Warning "Not able for find site - is \$env:SITEURL defined?"
+            exit
+        }
+        $hasSharePoint = $true
     }
-    $hasSharePoint = $true
     }else{
     if ($null -eq $scope){
         $scope = "Team.ReadBasic.All User.ReadBasic.All "
@@ -884,6 +902,7 @@ function Init ($invocation, $requireExchange, $delegated,$scope,$otherOptions) {
         isDelegate   = $delegated
         hasSharePoint= $hasSharePoint
         hasExchange  = $requireExchange
+        isExchangeConnected = $false
         SkipTranscript = $otherOptions.SkipTranscript
         apis         = @{
                         my = @{
@@ -911,17 +930,28 @@ function Init ($invocation, $requireExchange, $delegated,$scope,$otherOptions) {
         }
         Import-Module -Name $modulePath -DisableNameChecking
     
-            $errorCount = (RealErrorCount)
+            
             if ($true -eq $otherOptions.connectToExchangeUserNamePassword){
                 $session = ConnectExchange $env:AADUSER $env:AADPASSWORD
             }else{
-            $session = ConnectExchange2 $env:APPCLIENT_ID $token
+            
+                
+try 
+{ $var = Get-Mailbox
+$hexatown.isExchangeConnected = $true
+} 
+
+catch # [Microsoft.Open.Azure.AD.CommonLibrary.AadNeedAuthenticationException] 
+{ 
+ 
+ ConnectExchange2 $env:APPCLIENT_ID $token $otherOptions.IgnoreErrors
+  }
+
+                        
+
+                
             }     
-            if ($errorCount -ne (RealErrorCount)) {
-                Write-Warning "Cannot connect to Exchange"
-                Done $hexatown
-                exit
-            }
+            
     
         }
     
@@ -934,14 +964,14 @@ function Start-Hexatown($invocation,$scope,$otherOptions){
 return Init $invocation $false $true $scope $otherOptions
 }
 
-function Start-HexatownApp($invocation){
+function Start-HexatownApp($invocation,$otherOptions){
 
-return Init $invocation $false 
+return Init $invocation $false $false $null $otherOptions  
 }
 
-function Start-HexatownAppWithExchange($invocation){
+function Start-HexatownAppWithExchange($invocation,$otherOptions){
 
-return Init $invocation $true
+return Init $invocation $true $false $null $otherOptions
 }
 
 function Done($hexatown) {
@@ -1066,9 +1096,65 @@ function RemoveUnwantedProperties($item, $wantedFields) {
     return $item
 }
 
-function RemoveStandardSharePointProperties($item) {
+    
 
-    $fields = @("@odata.etag", 
+
+function RemoveStandardSharePointElements($fields) {
+
+$standardSharePointFields = @("@odata.etag", 
+        "id",
+        "Title",
+        "ContentType",
+        "Modified",
+        "Created",
+        "_UIVersionString",
+        "Attachments",
+        "Edit",
+        "LinkTitleNoMenu",
+        "LinkTitle",
+        "ItemChildCount",
+        "FolderChildCount",
+        "contentType",
+        "modified",
+        "created",
+         "Title",
+        "Author",
+        "AppAuthor",
+        "Editor",
+        "AppEditor",
+        "_UIVersionString",
+        "attachments",
+        "edit",
+        "linkTitleNoMenu",
+        "linkTitle",
+        "itemChildCount",
+        "folderChildCount",
+        "ComplianceAssetId"
+        "_ComplianceFlags",
+        "_ComplianceTag",
+        "_ComplianceTagWrittenTime",
+        "_ComplianceTagUserId",
+        "DocIcon",
+        "_IsRecord")
+    $newFields = @()    
+    foreach ($field in $fields)
+    {
+        $remove = $false
+        foreach ($standardSharePointField in $standardSharePointFields) {
+            if ($field.name -eq $standardSharePointField){
+                $remove = $true
+            }
+        }
+        if (!$remove){
+        $newFields += $field
+}
+    }
+    return $newFields
+
+}
+
+function RemoveStandardSharePointProperties($item) {
+    $standardSharePointFields = @("@odata.etag", 
         #"id", << This field shall not be removed !        
         "ContentType",
         "Modified",
@@ -1104,7 +1190,8 @@ function RemoveStandardSharePointProperties($item) {
         "_ComplianceTagWrittenTime",
         "_ComplianceTagUserId")
 
-    foreach ($field in $fields) {
+
+    foreach ($field in $standardSharePointFields) {
         $item.PSObject.Properties.Remove($field)
     }
     return $item
@@ -1395,9 +1482,9 @@ function execute($hexatown ,$list,$script){
 
 $body = @{fields = @{
                       Processed = $true
-#                      ResponseCode = $ResponseCode
+                      ResponseCode = $ResponseCode
      #                 Error = $errorMessage
-     #                 Response = $response 
+                      Response = $response 
                      } 
 } | ConvertTo-Json
         PatchSharePointListItem $hexatown.token $hexatown.site $schema.lists.$list $item.id $body | Out-Null
@@ -1457,7 +1544,7 @@ try
             $ResponseCode = 400
             $responseData = $parsedRequest[1]
             $responseJSON = $responseData | convertto-json -Depth 10
-            $responseCSV = $responseData | ConvertTo-Csv -Delimiter "|" | Convertto-Json 
+            # $responseCSV = $responseData | ConvertTo-Csv -Delimiter "|" | Convertto-Json 
 
         }
         else {        
@@ -1476,7 +1563,8 @@ try
                 $scriptText = @"
 param (`$hexatown,`$request,`$requestor)
 &`"`$PSScriptRoot\..\..\actions\***THE SCRIPT TO USE***.ps1" `
-`$hexatown ` 
+`$hexatown `
+
 "@        
 
     $requestFields = $payload | Get-Member -MemberType  NoteProperty | Select Name
@@ -1523,7 +1611,7 @@ param (`$hexatown,`$request,`$requestor)
         }
         finally {
             $responseJSON = $responseData | convertto-json -Depth 10
-            $responseCSV = $responseData | ConvertTo-Csv -Delimiter "|" | Convertto-Json 
+            #$responseCSV = $responseData | ConvertTo-Csv -Delimiter "|" | Convertto-Json 
         }
         if ($null -eq $responseData){
             
@@ -1537,7 +1625,7 @@ $body = @{fields = @{
                       Processed = $true
                       Responsecode = $ResponseCode
                       Response = $responseJSON
-                      ResponseCSV = $responseCSV 
+                      #ResponseCSV = $responseCSV 
                      } 
 } | ConvertTo-Json
 
@@ -1546,9 +1634,9 @@ $body = @{fields = @{
     }
 
         Start-Sleep -Seconds 1
-        $elapsed =  New-TimeSpan â€“Start $StartDate â€“End (GET-DATE)
+        $elapsed =  New-TimeSpan -Start $StartDate -End (GET-DATE)
 
-        $elapsedMinute =  New-TimeSpan â€“Start $StartDateMinute â€“End (GET-DATE)
+        $elapsedMinute =  New-TimeSpan -Start $StartDateMinute -End (GET-DATE)
 
         if ($elapsedMinute.TotalMinutes -ge 1){
             $TotalMinutes++
