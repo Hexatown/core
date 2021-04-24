@@ -490,7 +490,7 @@ function FindSiteByUrl($token, $siteUrl) {
     $Xheaders.Add("Prefer", "apiversion=2.1") ## Not compatibel when reading items from SharePointed fields 
     $Xheaders.Add("Authorization", "Bearer $token" )
 
-    $url = 'https://graph.microsoft.com/v1.0/sites/?$top=1'
+    $url = 'https://graph.microsoft.com/v1.0/sites/root'
     $topItems = Invoke-RestMethod $url -Method 'GET' -Headers $Xheaders 
     if ($topItems.Length -eq 0) {
         Write-Warning "Cannot read sites from Office Graph - sure permissions are right?"
