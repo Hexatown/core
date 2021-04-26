@@ -1498,7 +1498,7 @@ function execute($hexatown ,$list,$script){
 
 $body = @{fields = @{
                       Processed = $true
-                      ResponseCode = $ResponseCode
+                      # ResponseCode = $ResponseCode
      #                 Error = $errorMessage
                       Response = $response 
                      } 
