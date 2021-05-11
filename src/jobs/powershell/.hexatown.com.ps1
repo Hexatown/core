@@ -1,4 +1,4 @@
-<# V2.0.8@HEXATOWN 
+<# V2.0.9@HEXATOWN 
  
 Copyright (C) 2020-2021 Niels Gregers Johansen
 
@@ -7,6 +7,10 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+2.0.9
+-----
+bug fix:  serve function - catching errors on writting response
 
 2.0.8
 -----
@@ -1623,16 +1627,15 @@ param (`$hexatown,`$request,`$requestor)
                 $ResponseCode = 200
                 
             }        
-        
+            #$responseJSON = $responseData[0] | convertto-json -Depth 10
+            $responseCSV = $responseData 
+
+
         }
         catch 
         {
             $responseData  = $psitem.Exception.Message
             $ResponseCode = 500
-        }
-        finally {
-            $responseJSON = $responseData | convertto-json -Depth 10
-            #$responseCSV = $responseData | ConvertTo-Csv -Delimiter "|" | Convertto-Json 
         }
         if ($null -eq $responseData){
             
@@ -1641,17 +1644,35 @@ param (`$hexatown,`$request,`$requestor)
         }
         }
 
-     
-$body = @{fields = @{
-                      Processed = $true
-                      Responsecode = $ResponseCode
-                      Response = $responseJSON
-                      #ResponseCSV = $responseCSV 
-                     } 
-} | ConvertTo-Json
+        try
+        {
+            $body = @{fields = @{
+                                  Processed = $true
+                                  Responsecode = $ResponseCode
+                                  Response = $responseJSON
+                                  ResponseCSV = $responseCSV 
+                                 } 
+            } | ConvertTo-Json
 
-        PatchSharePointListItem $hexatown.token $hexatown.site $requestListName $item.id $body | Out-Null
-        Write-Host "Response code" $responseCode
+            PatchSharePointListItem $hexatown.token $hexatown.site $requestListName $item.id $body | Out-Null
+            Write-Host "Response code" $responseCode            
+        }
+        catch 
+        {
+            $body = @{fields = @{                                 Processed = $true
+                                  Responsecode = 599
+                                  Response ="Cannot send response - " + $Error[0].Exception.Message
+                                  
+                                 } 
+            } | ConvertTo-Json
+
+            PatchSharePointListItem $hexatown.token $hexatown.site $requestListName $item.id $body | Out-Null
+            Write-Host "Error providing response"
+        
+        }
+     
+
+    }
     }
 
         Start-Sleep -Seconds 1
